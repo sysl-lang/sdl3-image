@@ -1,0 +1,95 @@
+module sh.sysl.sdl3_image
+@link("SDL3_image")
+
+import sysl.text.cstring
+import sh.sysl.sdl3.{Renderer, Surface, Texture}
+
+// SDL_image 3 — an image file decoded into a surface, or straight into a texture.
+//
+// **There is no init or quit.** SDL_image 3 loads its decoders on demand, so unlike SDL_ttf and
+// SDL_mixer there is nothing to bring up: the loaders below are the whole of it. The formats
+// available depend on what the installed SDL3_image was built with — PNG, JPEG, BMP and a few
+// others are always there; AVIF, JXL, TIFF and WEBP are options.
+//
+// **The format is decided by content, not by the file's name.** `load` sniffs the bytes, so a PNG
+// called `photo.jpg` decodes as a PNG. That is SDL_image's behaviour and it is the right one.
+
+extern "IMG_Version" img_version_raw() -> i32
+extern "IMG_Load" img_load(file: *u8) -> *u8
+extern "IMG_LoadTexture" img_load_texture(renderer: *u8, file: *u8) -> *u8
+extern "IMG_Save" img_save(surface: *u8, file: *u8) -> bool
+extern "IMG_SavePNG" img_save_png(surface: *u8, file: *u8) -> bool
+extern "IMG_SaveJPG" img_save_jpg(surface: *u8, file: *u8, quality: i32) -> bool
+extern "IMG_SaveBMP" img_save_bmp(surface: *u8, file: *u8) -> bool
+extern "IMG_SaveGIF" img_save_gif(surface: *u8, file: *u8) -> bool
+extern "IMG_SaveTGA" img_save_tga(surface: *u8, file: *u8, rle: bool) -> bool
+extern "IMG_GetClipboardImage" img_get_clipboard_image() -> *u8
+
+// The SDL_image being linked, as `major * 1000000 + minor * 1000 + patch`.
+version() -> i32 = img_version_raw()
+
+// Decode an image file into a CPU surface. Nothing if it will not decode, with the reason in
+// `sh.sysl.sdl3.error` — a missing file and an unsupported format both arrive this way.
+load(path: string) -> Option[Surface]
+    val p = cstring(path)
+    val s = img_load(p.ptr)
+
+    if s == null then None else Some(Surface(s))
+end load
+
+// Decode straight into a GPU texture, which is what a program that is only going to draw the image
+// wants — it saves making the surface and freeing it again.
+load_texture(renderer: Renderer, path: string) -> Option[Texture]
+    val p = cstring(path)
+    val t = img_load_texture(renderer.handle, p.ptr)
+
+    if t == null then None else Some(Texture(t))
+end load_texture
+
+// Whatever image is on the clipboard, if there is one. A screenshot pasted in, typically.
+clipboard_image() -> Option[Surface]
+    val s = img_get_clipboard_image()
+
+    if s == null then None else Some(Surface(s))
+end clipboard_image
+
+// Write a surface out, with the format chosen from the **file's extension** — the one place in this
+// package where the name decides rather than the content, because there is no content yet.
+save(surface: Surface, path: string) -> bool
+    val p = cstring(path)
+
+    img_save(surface.handle, p.ptr)
+end save
+
+save_png(surface: Surface, path: string) -> bool
+    val p = cstring(path)
+
+    img_save_png(surface.handle, p.ptr)
+end save_png
+
+// `quality` is 0 to 100. JPEG has no alpha channel, so anything transparent is flattened.
+save_jpg(surface: Surface, path: string, quality: i32 = 90) -> bool
+    val p = cstring(path)
+
+    img_save_jpg(surface.handle, p.ptr, quality)
+end save_jpg
+
+save_bmp(surface: Surface, path: string) -> bool
+    val p = cstring(path)
+
+    img_save_bmp(surface.handle, p.ptr)
+end save_bmp
+
+save_gif(surface: Surface, path: string) -> bool
+    val p = cstring(path)
+
+    img_save_gif(surface.handle, p.ptr)
+end save_gif
+
+// `rle` turns on run-length encoding, which makes flat artwork much smaller and photographs
+// slightly larger.
+save_tga(surface: Surface, path: string, rle: bool = true) -> bool
+    val p = cstring(path)
+
+    img_save_tga(surface.handle, p.ptr, rle)
+end save_tga

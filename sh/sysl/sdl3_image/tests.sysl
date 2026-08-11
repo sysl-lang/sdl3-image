@@ -1,0 +1,198 @@
+module sh.sysl.sdl3_image
+@tests
+
+import sysl.fs.{is_file, remove_file}
+import sh.sysl.sdl3.{HINT_VIDEO_DRIVER, INIT_VIDEO, PIXELFORMAT_ARGB8888, WINDOW_HIDDEN,
+                     Surface, create_surface, create_window, init, quit, set_hint}
+
+// The package's own tests, against a real SDL3_image.
+//
+// **They make their own input.** A test that needed a PNG checked into the repository would be
+// testing that git still holds a file; instead a surface is drawn here, written out, and read back,
+// so the round trip is what is asserted and the encoder and decoder check each other.
+
+extern "SDL_WriteSurfacePixel" sdl_write_surface_pixel(surface: *u8, x: i32, y: i32,
+                                                       r: u8, g: u8, b: u8, a: u8) -> bool
+
+headless()
+    set_hint(HINT_VIDEO_DRIVER, "dummy")
+    assert(init(INIT_VIDEO), "SDL_Init")
+
+// A small surface of a known colour, which is what every round trip below starts from.
+//
+// **It is flat on purpose.** JPEG transforms 8x8 blocks, so a picture with one coloured pixel in it
+// comes back with that pixel smeared across its whole block and no tolerance worth writing would
+// pass. A flat field survives any quantizer, which leaves the round trip testing the encoder and
+// decoder rather than testing what JPEG does to a spike.
+a_picture() -> Surface
+    val s = create_surface(8, 4, PIXELFORMAT_ARGB8888).expect("the surface was made")
+
+    for y in 0..<4i32
+        for x in 0..<8i32
+            assert(sdl_write_surface_pixel(s.handle, x, y, 200, 100, 50, 255), "filled it")
+
+    s
+
+@test
+the_library_reports_itself()
+    assert(version() >= 3000000, "SDL_image 3 or better, and no init step to do first")
+
+// **PNG is lossless and carries alpha**, so the pixel that went in is the pixel that comes out —
+// which makes this the one format whose round trip can be asserted exactly.
+@test
+a_png_round_trips_exactly()
+    headless()
+
+    val path = "/tmp/sysl-sdl3-image-test.png"
+    val s = a_picture()
+
+    assert(save_png(s, path), "wrote the PNG")
+    assert(is_file(path), "and there is a file there")
+
+    val back = load(path).expect("it decoded")
+
+    assert_eq(back.width(), 8i32, "the width survived")
+    assert_eq(back.height(), 4i32, "and the height")
+
+    val c = back.read_pixel(2, 1).expect("the pixel read back")
+
+    assert_eq(c.r, 200u8, "red survived losslessly")
+    assert_eq(c.g, 100u8, "and green")
+    assert_eq(c.b, 50u8, "and blue")
+    assert_eq(c.a, 255u8, "and the alpha channel is there at all, which JPEG's is not")
+
+    s.destroy()
+    back.destroy()
+    remove_file(path)
+    quit()
+
+// **The format is decided by content, not by the name.** A PNG written to a path ending in `.jpg`
+// still decodes as a PNG, which is SDL_image's behaviour and worth pinning: a program that trusted
+// the extension would be wrong about every file a user renamed.
+@test
+the_decoder_sniffs_the_bytes()
+    headless()
+
+    val path = "/tmp/sysl-sdl3-image-test-liar.jpg"
+    val s = a_picture()
+
+    assert(save_png(s, path), "wrote a PNG to a path that claims to be a JPEG")
+
+    val back = load(path).expect("it decoded anyway")
+    val c = back.read_pixel(2, 1).expect("the pixel read back")
+
+    assert_eq(c.r, 200u8, "losslessly, so it really was read as the PNG it is")
+
+    s.destroy()
+    back.destroy()
+    remove_file(path)
+    quit()
+
+// `save` picks its encoder from the extension — the one place a name decides, since there is no
+// content to sniff yet.
+@test
+saving_by_extension_picks_the_encoder()
+    headless()
+
+    val png = "/tmp/sysl-sdl3-image-test-ext.png"
+    val bmp = "/tmp/sysl-sdl3-image-test-ext.bmp"
+    val s = a_picture()
+
+    assert(save(s, png), "saved as PNG by its extension")
+    assert(save(s, bmp), "and as BMP by its")
+
+    val back_png = load(png).expect("the PNG decoded")
+    val back_bmp = load(bmp).expect("the BMP decoded")
+
+    assert_eq(back_png.read_pixel(2, 1).expect("png pixel").r, 200u8, "PNG is lossless")
+    assert_eq(back_bmp.read_pixel(2, 1).expect("bmp pixel").r, 200u8, "and so is BMP")
+
+    s.destroy()
+    back_png.destroy()
+    back_bmp.destroy()
+    remove_file(png)
+    remove_file(bmp)
+    quit()
+
+// **JPEG is lossy and has no alpha**, so the assertion is a tolerance rather than an equality. That
+// is the honest test: asserting exactness here would either fail or be pinning an artefact of one
+// encoder's tuning.
+@test
+a_jpeg_round_trips_approximately()
+    headless()
+
+    val path = "/tmp/sysl-sdl3-image-test.jpg"
+    val s = a_picture()
+
+    assert(save_jpg(s, path, 95), "wrote the JPEG")
+
+    val back = load(path).expect("it decoded")
+
+    assert_eq(back.width(), 8i32, "the width survived exactly")
+    assert_eq(back.height(), 4i32, "and the height")
+
+    val c = back.read_pixel(2, 1).expect("the pixel read back")
+
+    assert(int(c.r) > 190 && int(c.r) < 210, "and the red is near enough what went in")
+    assert(int(c.g) > 90 && int(c.g) < 110, "and so is the green")
+    assert(int(c.b) > 40 && int(c.b) < 60, "and the blue")
+
+    s.destroy()
+    back.destroy()
+    remove_file(path)
+    quit()
+
+@test
+the_other_encoders_write_something_readable()
+    headless()
+
+    val s = a_picture()
+    val tga = "/tmp/sysl-sdl3-image-test.tga"
+    val bmp = "/tmp/sysl-sdl3-image-test-plain.bmp"
+
+    assert(save_tga(s, tga), "run-length encoded TGA")
+    assert(save_bmp(s, bmp), "and BMP")
+
+    assert_eq(load(tga).expect("the TGA decoded").width(), 8i32, "the TGA is the right size")
+    assert_eq(load(bmp).expect("the BMP decoded").width(), 8i32, "and so is the BMP")
+
+    s.destroy()
+    remove_file(tga)
+    remove_file(bmp)
+    quit()
+
+// A file that is not there is nothing, rather than a handle that fails later.
+@test
+a_missing_file_is_nothing()
+    headless()
+
+    load("/no/such/picture.png") match
+        Some(_) -> assert(false, "a file that is not there did not decode")
+        None -> ()
+
+    quit()
+
+// Straight to the GPU, which is what a program that will only draw the image wants.
+@test
+an_image_loads_straight_into_a_texture()
+    headless()
+
+    val path = "/tmp/sysl-sdl3-image-test-tex.png"
+    val s = a_picture()
+
+    assert(save_png(s, path), "wrote the PNG")
+
+    val w = create_window("image", 32, 32, WINDOW_HIDDEN).expect("the window opened")
+    val r = w.create_renderer().expect("the renderer opened")
+    val t = load_texture(r, path).expect("the texture was made")
+    val (tw, th) = t.size()
+
+    assert_eq(tw, 8.0f32, "the texture is the image's width")
+    assert_eq(th, 4.0f32, "and its height")
+
+    s.destroy()
+    t.destroy()
+    r.destroy()
+    w.destroy()
+    remove_file(path)
+    quit()
