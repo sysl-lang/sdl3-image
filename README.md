@@ -5,14 +5,15 @@ written back out.
 
 ```
 dependencies {
-  sdl3       { git = "github.com/sysl-lang/sdl3",       version = "0.1.0" }
-  sdl3-image { git = "github.com/sysl-lang/sdl3-image", version = "0.1.0" }
+  sdl3       { git = "github.com/sysl-lang/sdl3",       version = "0.2.0" }
+  sdl3-image { git = "github.com/sysl-lang/sdl3-image", version = "0.2.0" }
 }
 ```
 
 ```sysl
 import sh.sysl.sdl3.*
 import sh.sysl.sdl3_image.*
+import sh.sysl.sdl3.c.INIT_VIDEO
 
 main()
     init(INIT_VIDEO)
@@ -31,11 +32,22 @@ main()
 
 ```
 brew install sdl3_image                 # pulls sdl3 with it
-sysl run prog.sysl --include-path /opt/homebrew/include --link-path /opt/homebrew/lib
+sysl run prog.sysl --include-path sdl3=/opt/homebrew/include --link-path /opt/homebrew/lib
 ```
 
 The two flags are deliberate — see [`sdl3`](https://github.com/sysl-lang/sdl3)'s README, which also
 says why this is a separate package rather than a module inside that one.
+
+The include path is named `sdl3=` because it answers *that* package's header requirement.
+**This package transcribes no constants at all**, so it asks the C compiler for nothing and declares
+no headers of its own: SDL_image's whole surface is functions. `sh.sysl.sdl3_image.c` is ten
+`extern`s and an import of `sh.sysl.sdl3.c`'s handles, and that is the entire C layer.
+
+## Handles own themselves
+
+A surface or a texture from here is a `&T` with an `impl Drop`, exactly as one from `sdl3` is, so
+there is no `destroy` anywhere in this API — a decoded image goes when the last reference to it
+does.
 
 ## There is no init
 
@@ -59,7 +71,7 @@ outright where that is clearer.
 ## Tests
 
 ```
-sysl test . --include-path /opt/homebrew/include --link-path /opt/homebrew/lib
+sysl test . --include-path sdl3=/opt/homebrew/include --link-path /opt/homebrew/lib
 ```
 
 Eight tests, headless. **They make their own input** — a test needing a PNG checked into the

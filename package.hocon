@@ -1,13 +1,16 @@
 // SDL_image 3 — image files decoded, for sysl.
 //
 //     dependencies {
-//       sdl3-image { git = "github.com/sysl-lang/sdl3-image", version = "0.1.0" }
+//       sdl3-image { git = "github.com/sysl-lang/sdl3-image", version = "0.2.0" }
 //     }
 //
 // **SDL3 and SDL3_image both have to be installed** — `brew install sdl3_image` pulls both — and a
 // build needs the prefix on the command line:
 //
-//     sysl run prog.sysl --include-path /opt/homebrew/include --link-path /opt/homebrew/lib
+//     sysl run prog.sysl --include-path sdl3=/opt/homebrew/include --link-path /opt/homebrew/lib
+//
+// The include path is named `sdl3=` because it answers *that* package's header requirement: this
+// one transcribes no constants and so asks the C compiler for nothing, but `sh.sysl.sdl3.c` does.
 //
 // This is a separate package from `sdl3` rather than a module inside it, and the reason is
 // mechanical: a link directive is never pruned, so a program that only drew rectangles would still
@@ -15,13 +18,14 @@
 
 package {
   name    = "sdl3-image"
-  version = "0.1.0"
+  version = "0.2.0"
 }
 
-// The core binding, for `Color`, `Surface`, `Renderer` and `Texture`. It is fetched by the
+// The core binding, for `Surface`, `Renderer` and `Texture` — and for their C handles, which
+// `sh.sysl.sdl3_image.c` names in its own declarations. It is fetched by the
 // coordinate below, so nothing has to be checked out beside this repository.
 dependencies {
-  sdl3 { git = "github.com/sysl-lang/sdl3", version = "0.1.0" }
+  sdl3 { git = "github.com/sysl-lang/sdl3", version = "0.2.0" }
 }
 
 requires {

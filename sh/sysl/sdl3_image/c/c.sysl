@@ -1,0 +1,36 @@
+// SDL_image 3, declared verbatim.
+//
+// **Everything that is C lives in this directory** — this one file of declarations over the library
+// the machine has. Nothing here is meant to be called by a program: every name and every convention
+// is C's, so a path is a pointer to bytes and a failure is a null with the reason somewhere else.
+// The module above this one turns those into sysl and is what an application imports.
+//
+// The split keeps two jobs apart. This one has to be **faithful** — a signature that disagrees with
+// the header links perfectly and corrupts the call at run time — and the other one has to be
+// **pleasant**, which is a different question.
+//
+// **There is no `c const` block here, because there is nothing transcribed.** SDL_image's whole
+// surface is functions; it has no `#define`d value this package needs, so nothing has to be asked
+// of the C compiler and this package requires no headers of its own. `sdl3`'s are still needed,
+// since that is where the handles below come from.
+//
+// The handles are `sh.sysl.sdl3.c`'s: a surface, a texture and a renderer are SDL3's objects, and
+// SDL_image only makes and consumes them.
+
+module sh.sysl.sdl3_image.c
+@link("SDL3_image")
+
+import sh.sysl.sdl3.c.{Renderer, Surface, Texture}
+
+extern "IMG_Version" version() -> i32
+
+extern "IMG_Load" load(file: *u8) -> *Surface
+extern "IMG_LoadTexture" load_texture(renderer: *Renderer, file: *u8) -> *Texture
+extern "IMG_GetClipboardImage" get_clipboard_image() -> *Surface
+
+extern "IMG_Save" save(surface: *Surface, file: *u8) -> bool
+extern "IMG_SavePNG" save_png(surface: *Surface, file: *u8) -> bool
+extern "IMG_SaveJPG" save_jpg(surface: *Surface, file: *u8, quality: i32) -> bool
+extern "IMG_SaveBMP" save_bmp(surface: *Surface, file: *u8) -> bool
+extern "IMG_SaveGIF" save_gif(surface: *Surface, file: *u8) -> bool
+extern "IMG_SaveTGA" save_tga(surface: *Surface, file: *u8, rle: bool) -> bool
