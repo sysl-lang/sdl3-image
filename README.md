@@ -32,16 +32,19 @@ main()
 
 ```
 brew install sdl3_image                 # pulls sdl3 with it
-sysl run prog.sysl --include-path sdl3=/opt/homebrew/include --link-path /opt/homebrew/lib
+sysl run prog.sysl
 ```
 
-The two flags are deliberate — see [`sdl3`](https://github.com/sysl-lang/sdl3)'s README, which also
-says why this is a separate package rather than a module inside that one.
+No flags — see [`sdl3`](https://github.com/sysl-lang/sdl3)'s README, which also says why this is a
+separate package rather than a module inside that one.
 
-The include path is named `sdl3=` because it answers *that* package's header requirement.
-**This package transcribes no constants at all**, so it asks the C compiler for nothing and declares
-no headers of its own: SDL_image's whole surface is functions. `sh.sysl.sdl3_image.c` is ten
-`extern`s and an import of `sh.sysl.sdl3.c`'s handles, and that is the entire C layer.
+**This package transcribes no constants at all**, so it asks the C compiler for nothing and reads no
+header: SDL_image's whole surface is functions. `sh.sysl.sdl3_image.c` is ten `extern`s and an import
+of `sh.sysl.sdl3.c`'s handles, and that is the entire C layer. What it needs is the **library**, at
+link time — and until 0.2.1 this file said nothing about that at all, so a machine without SDL_image
+found out from the linker. It names it now, and pkg-config supplies the link line.
+
+**Needs sysl 0.0.56.**
 
 ## Handles own themselves
 
@@ -71,7 +74,7 @@ outright where that is clearer.
 ## Tests
 
 ```
-sysl test . --include-path sdl3=/opt/homebrew/include --link-path /opt/homebrew/lib
+sysl test .
 ```
 
 Eight tests, headless. **They make their own input** — a test needing a PNG checked into the

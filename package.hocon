@@ -32,10 +32,12 @@ requires {
   heap  = true
   posix = true
 
-  // `sh.sysl.sdl3_image.c` asks the C compiler for SDL_image's constants rather than transcribing them,
-  // so the headers are read at compile time and not only at link time — and `@link("SDL_image")` needs
-  // the library itself at the end of it. SDL_image ships a `sdl3-image.pc` that answers both, so the machine
-  // is asked and the consumer types nothing.
+  // **This package transcribes no constants and reads no header**: it holds `extern` declarations and
+  // nothing else, so there is no `c const` block and no `@include` here — SDL_image's whole surface is
+  // functions. What it needs is the **library**, at link time, for `@link("SDL_image")` to resolve.
+  //
+  // SDL_image ships a `sdl3-image.pc`, so naming it here gets the link line from pkg-config and the consumer
+  // types nothing. The include half of the answer is along for the ride and costs nothing.
   //
   // **This package declared no requirement at all until 0.2.1**, which meant a consumer without
   // SDL_image installed met clang reporting a header they had never heard of, and this file said
