@@ -2,9 +2,8 @@ module sh.sysl.sdl3_image
 @tests
 
 import sysl.fs.{is_file, remove_file}
-import sh.sysl.sdl3.{HINT_VIDEO_DRIVER, PixelFormat, Surface, create_surface, create_window, init,
-                     quit, rgb, set_hint}
-import sh.sysl.sdl3.c.{INIT_VIDEO, WINDOW_HIDDEN}
+import sh.sysl.sdl3.{HINT_VIDEO_DRIVER, INIT_VIDEO, PixelFormat, Surface, WINDOW_HIDDEN,
+                     create_surface, create_window, init, quit, rgb, set_hint}
 
 // The package's own tests, against a real SDL3_image.
 //

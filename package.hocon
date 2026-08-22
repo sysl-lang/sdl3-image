@@ -1,7 +1,7 @@
 // SDL_image 3 — image files decoded, for sysl.
 //
 //     dependencies {
-//       sdl3-image { git = "github.com/sysl-lang/sdl3-image", version = "0.2.1" }
+//       sdl3-image { git = "github.com/sysl-lang/sdl3-image", version = "0.3.0" }
 //     }
 //
 // **SDL3 and SDL3_image both have to be installed** — `brew install sdl3_image` pulls both — and a
@@ -18,14 +18,14 @@
 
 package {
   name    = "sdl3-image"
-  version = "0.2.1"
+  version = "0.3.0"
 }
 
 // The core binding, for `Surface`, `Renderer` and `Texture` — and for their C handles, which
 // `sh.sysl.sdl3_image.c` names in its own declarations. It is fetched by the
 // coordinate below, so nothing has to be checked out beside this repository.
 dependencies {
-  sdl3 { git = "github.com/sysl-lang/sdl3", version = "0.2.1" }
+  sdl3 { git = "github.com/sysl-lang/sdl3", version = "0.3.0" }
 }
 
 requires {
