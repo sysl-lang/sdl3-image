@@ -3,6 +3,8 @@
 SDL_image 3 for sysl — image files decoded into a surface or straight into a texture, and surfaces
 written back out.
 
+*An independent sysl package for SDL_image. It is not affiliated with or endorsed by SDL_image's authors or trademark holders.*
+
 ```
 dependencies {
   sdl3       { git = "github.com/sysl-lang/sdl3",       version = "0.3.6" }
