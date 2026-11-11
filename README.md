@@ -7,8 +7,8 @@ written back out.
 
 ```
 dependencies {
-  sdl3       { git = "github.com/sysl-lang/sdl3",       version = "0.3.6" }
-  sdl3-image { git = "github.com/sysl-lang/sdl3-image", version = "0.3.2" }
+  sdl3       { git = "github.com/sysl-lang/sdl3",       version = "0.3.25" }
+  sdl3-image { git = "github.com/sysl-lang/sdl3-image", version = "0.3.4" }
 }
 ```
 

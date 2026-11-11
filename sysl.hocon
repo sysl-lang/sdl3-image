@@ -1,7 +1,7 @@
 // SDL_image 3 — image files decoded, for sysl.
 //
 //     dependencies {
-//       sdl3-image { git = "github.com/sysl-lang/sdl3-image", version = "0.3.3" }
+//       sdl3-image { git = "github.com/sysl-lang/sdl3-image", version = "0.3.4" }
 //     }
 //
 // **SDL3 and SDL3_image both have to be installed** — `brew install sdl3_image` pulls both — and a
@@ -18,7 +18,7 @@
 
 package {
   name    = "sdl3-image"
-  version = "0.3.3"
+  version = "0.3.4"
   sysl    = "0.10.0"
 }
 
@@ -26,7 +26,7 @@ package {
 // `sh.sysl.sdl3_image.c` names in its own declarations. It is fetched by the
 // coordinate below, so nothing has to be checked out beside this repository.
 dependencies {
-  sdl3 { git = "github.com/sysl-lang/sdl3", version = "0.3.11" }
+  sdl3 { git = "github.com/sysl-lang/sdl3", version = "0.3.25" }
 }
 
 requires {
