@@ -19,7 +19,7 @@
 package {
   name    = "sdl3-image"
   version = "0.3.3"
-  sysl    = "0.6.0"
+  sysl    = "0.10.0"
 }
 
 // The core binding, for `Surface`, `Renderer` and `Texture` — and for their C handles, which
